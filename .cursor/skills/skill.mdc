@@ -1,0 +1,382 @@
+---
+alwaysApply: true
+---
+Here’s a ready-to-use skill. Create a folder like `.cursor/skills/langchain-vet-chatbots/` and save this as `SKILL.md` inside it.
+
+```markdown
+---
+name: langchain-vet-chatbots
+description: Designs and implements LangChain-based chatbots with system prompts, tools, RAG pipelines, and memory for veterinary clinics. Use when building or modifying conversational agents, retrieval-augmented chat, or tool-using bots for veterinary use cases (triage, FAQs, appointment booking, follow-ups, clinic workflows).
+---
+
+# LangChain Chatbots for Veterinary Clinics
+
+## Quick Start
+
+When this skill is active and the user asks for a LangChain chatbot for veterinary use cases:
+
+1. **Clarify the goal (silently in reasoning)**:
+   - Target users (pet owners, internal staff, both).
+   - Main flows (pre-visit triage, FAQs, post-op follow-up, appointment management, billing/admin).
+   - Deployment channel (web widget, WhatsApp, internal dashboard, etc.).
+2. **Inspect the project**:
+   - Look for existing LangChain code (`chains`, `agents`, `tools`, `retrievers`, `vectorstores`).
+   - Reuse existing patterns and dependencies where possible.
+3. **Decide architecture** (prefer simple):
+   - FAQ-style → retrieval QA chain with RAG, optional conversational memory.
+   - Multi-tool assistant (booking, CRM, knowledge base) → agent with tools + RAG + conversation memory.
+   - Internal-only flows → tools + structured outputs, minimal free-form text.
+4. **Design the system prompt first**, then:
+   - Define tools.
+   - Define retrieval/RAG.
+   - Define memory.
+   - Wire them together in a small, testable chain/agent.
+5. **Add a minimal test/demo** (script or test) that exercises:
+   - One typical “happy path” veterinary query.
+   - One edge case (emergency, unclear information, user pushing for a diagnosis).
+
+Keep implementations small, composable, and explicit.
+
+---
+
+## Veterinary Domain Guidance
+
+When designing prompts, tools, and flows, keep in mind:
+
+- **Safety and disclaimers**
+  - The chatbot is **not** a replacement for a veterinarian.
+  - It should **never** give definitive diagnoses or prescribe medications.
+  - It should **strongly encourage immediate in-person care** for:
+    - Difficulty breathing, seizures, unconsciousness.
+    - Severe bleeding or trauma (e.g., car accidents, large wounds).
+    - Suspected poisoning, bloat, or acute abdomen.
+- **Triage-style behavior**
+  - Ask clarifying questions: species, breed, age, weight, sex, neuter status, current medications, chronic conditions.
+  - Ask about onset, duration, severity, progression of symptoms.
+  - Distinguish emergency vs. routine issues; route accordingly.
+- **Clinic workflows**
+  - Typical flows:
+    - Appointment booking and rescheduling.
+    - Vaccination schedules and reminders.
+    - Pre-surgery instructions, post-op care, medication reminders.
+    - Estimates, billing FAQs, insurance basics (if relevant for region).
+- **Regulatory and ethical constraints**
+  - Avoid pretending to have examined the animal.
+  - Avoid creating prescriptions or dosing instructions unless explicitly allowed, and even then add strong caveats and “confirm with your vet” instructions.
+  - Be transparent about limitations of remote advice.
+
+Always reflect these constraints in system prompts and tool behavior.
+
+---
+
+## Design Checklist
+
+Before writing code, mentally run through:
+
+- **System Prompt**
+  - Defines role: “assistant for veterinary clinics”.
+  - Encodes safety, disclaimers, and escalation rules.
+  - Describes available tools and when to use them.
+  - Specifies style (tone, language, level of detail).
+
+- **Tools**
+  - What real systems exist? (EHR/clinic software, appointment system, FAQ DB, pricing, etc.)
+  - For each tool:
+    - Clear name and description.
+    - Typed input schema (ideally `pydantic`).
+    - Safe failure behavior (don’t crash the conversation).
+  - Prefer a **small number of high-quality tools**.
+
+- **RAG / Knowledge Base**
+  - Sources: clinic website, internal protocols, FAQs, service descriptions, pre/post-op instructions.
+  - Chunking strategy and metadata (species, type of service, topic, language).
+  - Retrieval settings: `k`, similarity vs. MMR, filters (e.g., clinic location).
+
+- **Memory**
+  - Decide based on use case:
+    - Single interaction or FAQ widget → may not need memory.
+    - Conversational assistant or multi-step flows → use conversation memory.
+  - Consider:
+    - Buffer memory (short sessions).
+    - Summary memory (long sessions).
+    - Entity memory (owners, patients, past visits) if data is available and allowed.
+
+- **Safety and Guardrails**
+  - Re-encode medical constraints in the system prompt.
+  - Optionally add a “safety check” step or a tool that evaluates whether to escalate.
+  - Ensure outputs always recommend in-person care when in doubt.
+
+---
+
+## Implementation Patterns (LangChain)
+
+### 1. RAG QA for Veterinary FAQs
+
+Use when the chatbot mainly answers clinic FAQs and general guidance, not complex workflows.
+
+Typical components:
+
+- `ChatOpenAI` (or equivalent LLM).
+- `VectorStoreRetriever` (clinic docs, website, PDFs).
+- Optional prompt template with:
+  - System role (vet clinic assistant).
+  - Instructions to quote or paraphrase docs.
+  - Instructions to say “I don’t know” when uncertain.
+
+Example structure (conceptual, not tied to any provider):
+
+```python
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains import RetrievalQA
+
+llm = ChatOpenAI(temperature=0.2)
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            (
+                "You are a helpful assistant for a veterinary clinic. "
+                "Use the provided clinic documents to answer questions. "
+                "You are not a replacement for a veterinarian and cannot "
+                "give a definitive diagnosis or prescribe medications. "
+                "For emergencies (difficulty breathing, seizures, severe bleeding, "
+                "major trauma, suspected poisoning), immediately advise the user "
+                "to contact an emergency veterinarian or clinic by phone."
+            ),
+        ),
+        ("human", "{question}"),
+    ]
+)
+
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=retriever,  # pre-configured VectorStore retriever
+    chain_type="stuff",
+    chain_type_kwargs={"prompt": prompt},
+)
+```
+
+Adapt this pattern to your project’s LLM, retriever, and configuration.
+
+### 2. Tool-Using Agent for Clinic Workflows
+
+Use when the assistant must:
+
+- Book or reschedule appointments.
+- Look up client/patient records.
+- Send reminders or notes into a CRM.
+- Combine knowledge-base answers with operational actions.
+
+Typical components:
+
+- LLM configured as an agent.
+- Tools for:
+  - Appointment system.
+  - Patient/owner lookup.
+  - FAQ/RAG search.
+  - Internal notes/CRM actions.
+- Conversation memory.
+
+Conceptual pattern:
+
+```python
+from langchain.agents import initialize_agent, AgentType
+from langchain.memory import ConversationBufferMemory
+from langchain.chat_models import ChatOpenAI
+
+llm = ChatOpenAI(temperature=0.2)
+
+memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+
+tools = [
+    appointment_tool,
+    knowledge_base_tool,
+    crm_update_tool,
+]
+
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
+    memory=memory,
+    verbose=True,
+)
+```
+
+Ensure each tool’s description clearly states when to use it and what veterinary context it covers.
+
+---
+
+## System Prompt Template (Veterinary-Focused)
+
+When creating or updating system prompts, adapt this template:
+
+```text
+You are a helpful AI assistant for a veterinary clinic.
+
+Your goals:
+- Help pet owners understand when they should seek in-person veterinary care.
+- Answer questions about clinic services, opening hours, pricing ranges, and general pet care.
+- Support appointment booking, rescheduling, and follow-up workflows using the available tools.
+
+Safety and limitations:
+- You are NOT a veterinarian and have NOT examined the animal.
+- You MUST NOT provide definitive diagnoses or prescribe medications.
+- When symptoms may be serious (e.g., difficulty breathing, seizures, severe bleeding,
+  major trauma, suspected poisoning, extreme pain, collapse), immediately advise the
+  owner to contact an emergency veterinarian or clinic by phone or go there in person.
+- When you are uncertain, say you are unsure and encourage contacting the clinic.
+
+Conversation behavior:
+- Ask clarifying questions before giving guidance (species, age, weight, existing conditions,
+  current medications, duration and severity of symptoms).
+- Be empathetic and concise. Avoid medical jargon unless helpful, then explain it.
+- Prefer practical, step-by-step instructions, and always include a clear “next step”
+  (e.g., call the clinic, monitor at home and call if X happens, book a routine visit).
+
+Tools:
+- You have access to tools for appointment management, clinic FAQ search, and client/patient data.
+- Use these tools when needed instead of guessing.
+- If tools fail or data is incomplete, transparently explain the limitation and suggest
+  contacting the clinic directly.
+
+Always follow local regulations as far as you can infer them, defaulting to conservative advice
+and clear escalation to in-person veterinary care when in doubt.
+```
+
+Adapt it to the clinic’s brand voice and languages (e.g., Spanish, English).
+
+---
+
+## Tool Design Guidelines
+
+When defining tools for veterinary chatbots:
+
+- **Appointment tools**
+  - Inputs: date/time preferences, type of visit (routine, vaccination, surgery consult, urgent).
+  - Behavior:
+    - Validate that the requested time is valid for the clinic’s schedule.
+    - If no slots, suggest nearest alternatives.
+    - Return structured results (time, vet, location, confirmation status).
+
+- **Patient and owner lookup tools**
+  - Inputs: owner name, phone/email, patient name, species, optional ID.
+  - Outputs: anonymized or minimally sufficient information; avoid leaking full records if not needed.
+  - Ensure error handling for multiple or missing matches.
+
+- **Knowledge-base / FAQ tools**
+  - Wrap RAG behavior in a single tool when using agent-style orchestration, or
+    embed RAG directly in the main chain when agent tools aren’t needed.
+  - Clearly describe what domains it covers (clinic policies, services, standard care instructions).
+
+- **CRM/notes tools**
+  - Use for documenting that the chatbot interacted with the user (optional).
+  - Keep inputs minimal and privacy-conscious.
+
+Tool descriptions should explicitly mention “veterinary clinic”, “pet owners”, “patients”, so the agent chooses them appropriately.
+
+---
+
+## RAG and Knowledge Base Patterns
+
+When building RAG for veterinary content:
+
+- **Content sources**
+  - Clinic website pages (services, hours, locations).
+  - Internal SOPs and protocols (where allowed).
+  - Pre-visit and post-op instructions.
+  - Vaccination guidelines and schedules (adapted to local standards where possible).
+
+- **Chunking and metadata**
+  - Chunk by section/heading instead of fixed token size when possible.
+  - Add metadata such as:
+    - `species` (dog, cat, rabbit, etc.).
+    - `service_type` (surgery, dentistry, preventive care, emergency).
+    - `language` (es, en, etc.).
+    - `clinic_location` (if multi-location).
+
+- **Retrieval configuration**
+  - Use small `k` (e.g., 3–6) to keep responses focused.
+  - For multilingual content, filter by language.
+  - For species-specific content, filter by species when known.
+
+- **Answering style**
+  - Encourage citing or paraphrasing from documents.
+  - When no relevant docs: say so clearly and recommend contacting the clinic.
+
+---
+
+## Memory Strategies
+
+Choose the memory type based on the context:
+
+- **No memory**
+  - Simple FAQ widget embedded on a website.
+  - Each question is independent.
+
+- **Conversation buffer memory**
+  - Short live chats where user stays in the same session.
+  - Track context such as pet name, species, and recent answers.
+  - Good default for chat-based assistants.
+
+- **Summary memory**
+  - Long-running interactions or repeated sessions where past details matter.
+  - Summarize older messages to keep token usage low.
+
+- **Entity memory**
+  - When you have stable identifiers for owners and patients.
+  - Store persistent attributes (e.g., “Bella is a 3-year-old spayed female Labrador”).
+  - Ensure alignment with privacy and data protection requirements.
+
+In all cases, avoid storing sensitive personal information beyond what is necessary, and follow any project-specific privacy rules.
+
+---
+
+## Testing and Validation
+
+When you create or modify a veterinary chatbot:
+
+1. **Add at least one automated test or script**:
+   - Example queries:
+     - “My dog has been vomiting for 6 hours, what should I do?”
+     - “I need to book a vaccination for my cat next week.”
+   - Verify the assistant:
+     - Gives a clear escalation recommendation for potential emergencies.
+     - Uses tools when appropriate.
+     - Respects system prompt constraints.
+
+2. **Manual spot checks**
+   - Try ambiguous descriptions (“My pet seems off”) and verify:
+     - The assistant asks clarifying questions.
+     - It doesn’t jump to specific diagnoses.
+
+3. **Clinic-specific validation**
+   - Where possible, recommend that a real veterinarian or clinic staff member review:
+     - Prompt phrasing.
+     - Standard answers for common FAQs.
+     - Any copy used in pre/post-op instructions.
+
+---
+
+## Usage Examples
+
+When a user asks:
+
+- “Build a chatbot that answers FAQs from our veterinary clinic website in Spanish”:
+  - Create a RAG chain based on the site content.
+  - Use a Spanish system prompt reflecting the safety guidelines above.
+  - Add a small demo script and usage instructions.
+
+- “Add appointment booking to our existing vet bot”:
+  - Design an appointment tool with clear input/output schema.
+  - Expose it to the agent with a descriptive name and when-to-use guidance.
+  - Update the system prompt to describe the new tool.
+  - Add a test showing the bot booking an appointment with clarifying questions.
+
+- “Make the bot remember each pet within a session”:
+  - Add conversation memory (buffer or summary).
+  - Ensure the system prompt encourages the model to reuse known details.
+  - Optionally, introduce entity memory if there are stable identifiers available.
+```
