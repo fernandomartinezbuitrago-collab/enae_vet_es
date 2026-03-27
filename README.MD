@@ -1,57 +1,93 @@
-# 🐾 Chatbot Clínica Veterinaria - MVP Esterilización
+# Chatbot Clinica Veterinaria - MVP Esterilizacion
 
-Este proyecto es un asistente inteligente diseñado para optimizar el agendamiento de cirugías de castración y esterilización, reduciendo la carga administrativa de la clínica[cite: 473].
+Repositorio del MVP para asistir en dudas preoperatorias y soporte operativo de esterilizacion/castracion en clinica veterinaria.
 
----
+## Vision del producto (MVP)
 
-## 🔗 1. Ecosistema de Trabajo
+- Reducir la carga administrativa del equipo con respuestas guiadas y consistentes.
+- Estandarizar la informacion preoperatoria para tutores de mascotas.
+- Preparar la base para integracion de agenda y validacion de disponibilidad.
 
- **Tablero Jira (Épicas VET):**  [https://fernandomartinezbuitrago.atlassian.net/jira/software/projects/FERNANDO/summary?atlOrigin=eyJpIjoiZmUxMTAwNmFhNzg5NGIwMTg5OWY3YmIxODEwMTU5MGEiLCJwIjoiaiJ9](https://fernandomartinezbuitrago.atlassian.net/jira/software/projects/FERNANDO/summary?atlOrigin=eyJpIjoiZmUxMTAwNmFhNzg5NGIwMTg5OWY3YmIxODEwMTU5MGEiLCJwIjoiaiJ9)
+## Miembros del equipo
 
- **Despliegue (Vercel):** [PEGA AQUÍ TU URL DE VERCEL]
+- Product Manager: TBD
+- Backend: TBD
+- Frontend: TBD
+- QA/Soporte: TBD
 
- **Documentación API:** `[URL-VERCEL]/docs` (Swagger/OpenAPI)
+## Enlaces del proyecto
 
-## 🧠 2. Reglas de Negocio ("El Tetris")
+- Jira (proyecto): [FERNANDO - Enae-vet-es](https://fernandomartinezbuitrago.atlassian.net/jira/software/projects/FERNANDO/summary)
+- Ticket activo README maestro: [FERNANDO-14](https://fernandomartinezbuitrago.atlassian.net/browse/FERNANDO-14)
+- Vercel (deploy): TBD
+- URL publica del chatbot: TBD
 
-]El chatbot está programado para cumplir estrictamente con la capacidad operativa de la clínica
+## Estructura esperada del repositorio
 
-*Capacidad Diaria:** Máximo de **240 minutos** quirúrgicos de lunes a jueves[
+La estructura tecnica aun esta en evolucion. Como guia base:
 
-*Límite de Especie:** Máximo **2 perros** por día, sin importar los minutos restantes
+- `README.MD`: documento maestro del proyecto.
+- `.cursor/docs/Tickets.md`: backlog de referencia para epics y tickets.
+- `.cursor/commands/`: comandos operativos del flujo del equipo.
+- `.cursor/skills/`: skills de soporte para PM y desarrollo.
 
- *Perros:** 09:00 - 10:30 (Lunes a Jueves).
+## Instalacion local (base)
 
----
+> Nota: si cambian los comandos reales del proyecto, actualiza esta seccion en el mismo ticket o en un ticket de mantenimiento documental.
 
-## 📚 3. Implementación RAG (+1 pt)
+1. Clona el repositorio.
+2. Crea y activa entorno virtual.
+3. Instala dependencias del proyecto.
+4. Configura variables de entorno.
+5. Arranca la aplicacion en modo local.
 
-El conocimiento del bot sobre ayuno y protocolos preoperatorios se alimenta de la fuente oficial[cite: 516, 517]:
+Ejemplo de comandos (ajustar si aplica):
 
- [Instrucciones Preoperatorias Oficiales]([https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation)](https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation)[cite).
+```bash
+python -m venv .venv
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
----
+## Variables de entorno
 
-## 🛠️ 4. Instalación y Uso
+Crear archivo `.env` local (no subirlo al repositorio):
 
-1. **Requisitos:** Python 3.10+ y `pip install -r requirements.txt`[cite: 544, 627].
+```env
+OPENAI_API_KEY=your_key_here
+API_BASE_URL=http://localhost:8000
+```
 
-2.**Variables de Entorno:** Configurar `.env` con `OPENAI_API_KEY` (Ver `.env.example`).
+Reglas:
 
-3. **Ejecutar:** `uvicorn main:app --reload`.
+- No incluir secretos reales en commits.
+- Mantener `.env` fuera de versionado.
+- Configurar secretos de produccion solo en Vercel/Jira Vault si aplica.
 
----
+## Flujo Git -> Build -> URL
 
-## 📊 5. Backlog de Tareas (Trazabilidad)
+1. Crear rama por ticket: `feature/VET-XX`.
+2. Implementar cambios y abrir Pull Request contra `main`.
+3. Ejecutar validaciones (lint/tests/manuales) antes de merge.
+4. Merge a `main`.
+5. Verificar build y despliegue en Vercel.
+6. Confirmar URL publica funcional.
 
-| Ticket | Tarea | Estado |
+## Checklist de tickets VET
 
-| :--- | :--- | :--- |
+- [ ] Ticket Jira enlazado en PR.
+- [ ] Alcance y CAC revisados antes de implementar.
+- [ ] Cambios documentados en `README.MD` o `docs`/`.cursor/docs` cuando aplique.
+- [ ] Evidencias de validacion adjuntas (capturas/logs/tests).
+- [ ] Estado del ticket actualizado (`Por hacer` -> `En curso` -> `En revision` -> `Listo`).
 
-| **VET-1** | Fork y accesos al profesor `jmarco111`) | [cite_start]Hecho ✅ 
+## Backlog de referencia (TBD)
 
-| **VET-2** | README Maestro (Estructura) | [cite_start]En curso 🛠️
+- Fuente principal: `.cursor/docs/Tickets.md`
+- Priorizacion por sprint: TBD
+- Dependencias tecnicas: TBD
 
-| **VET-14** | Docs de dominio (Event Storming/Reglas) | [cite_start]Pendiente ⏳  |
+## Estado del documento
 
-| **VET-3** | Despliegue en Vercel | [cite_start][Pendiente/Hecho]
+Este README se considera una plantilla viva. Se actualiza progresivamente conforme se implementan tickets VET.
