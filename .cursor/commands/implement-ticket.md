@@ -78,7 +78,7 @@
 
 ## Fase 6 – Crear la Pull Request con buena descripción
 
-- El agente crea una rama que contenga el número de ticket y despues crea un pull request against main
+- El agente   crea una rama que contenga el número de ticket y despues crea un pull request against main
   - Referencia al ticket (ID y/o URL).
   - **Resumen funcional** en 2–4 viñetas, centrado en:
     - Cambios de comportamiento.
