@@ -27,7 +27,7 @@ Always treat this repository as the source of truth for domain specifics and fol
 - Treat that backend skill as your **execution playbook** (ticket workflow, PR process, testing discipline), and this chatbot skill as your **role and domain focus** (veterinary chatbots and LangChain design).
 -
 - When the chatbot or backend feature is specifically about **sterilization of dogs and cats** and a **project manager** needs help with business context (pricing, capacity, KPIs, campaigns), also leverage:
-  - `.cursor/skills/veterinary-business-sterilization/SKILL.md`
+  - `.cursor/skills/veterinary-sterilization-business-expert/SKILL.md`
 - Treat that business skill as a **domain business context companion** for PMs (epics, tickets, CAC, prioritization), while this skill focuses on the **technical implementation** of chatbots and services.
 
 ## When to Use This Skill

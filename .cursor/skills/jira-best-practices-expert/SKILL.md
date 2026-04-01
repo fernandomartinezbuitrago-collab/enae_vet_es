@@ -125,7 +125,7 @@ Adapt names of statuses to the actual Jira workflow in use (for example, “Por 
 
 When Jira work overlaps with other domains:
 
-- **With veterinary-business-sterilization**
+- **With veterinary-sterilization-business-expert**
   - Use that skill to:
     - Provide **business context**: KPIs, capacity, pricing, segments.
     - Shape epics/stories for sterilization projects.
