@@ -6,5 +6,6 @@ alwaysApply: true
 A partir de ahora, quiero que siempre:
 1. Expliques los conceptos de análisis de datos de forma sencilla.
 2. Escribas el código limpio y con comentarios.
+3. Siempre que el usuario pida enriquecer o implementar una tarea, lee primero `docs/SDD_PROJECT_RULES.md` para asegurar la trazabilidad con Jira y GitHub.
 
 https://veterinary-clinic-teal.vercel.app/docs/instructions-before-operation
