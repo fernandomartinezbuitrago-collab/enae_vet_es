@@ -12,6 +12,7 @@ El MVP prioriza tres objetivos:
 - Validar disponibilidad segun reglas estrictas de agenda ("El Tetris") antes de confirmar.
 
 Alcance del MVP:
+
 - Reservas de esterilizacion (perros y gatos).
 - Validacion automatica de cupos por minutos y limite de perros por dia.
 - Mensajeria de confirmacion con ventana de entrega y protocolo de ayuno.
@@ -20,9 +21,10 @@ Alcance del MVP:
 
 Fuente funcional y de negocio del proyecto:
 
-- [`docs/preparatorio.md`](docs/preparatorio.md): contexto clinico, protocolo pre y post operatorio, requisitos para una esterilizacion segura.
-- [`docs/reglas_negocio.md`](docs/reglas_negocio.md): reglas formales de agenda, tabla maestra de tiempos y restricciones del algoritmo.
-- [`docs/event_storming.md`](docs/event_storming.md): diagrama del flujo end-to-end (comandos, eventos, politicas y validaciones).
+- [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md): reglas SDD, trazabilidad Jira/GitHub y convenciones de ramas (VET-4).
+- `[docs/preparatorio.md](docs/preparatorio.md)`: contexto clinico, protocolo pre y post operatorio, requisitos para una esterilizacion segura.
+- `[docs/reglas_negocio.md](docs/reglas_negocio.md)`: reglas formales de agenda, tabla maestra de tiempos y restricciones del algoritmo.
+- `[docs/event_storming.md](docs/event_storming.md)`: diagrama del flujo end-to-end (comandos, eventos, politicas y validaciones).
 
 ## 🧠 Reglas de Negocio (El Tetris)
 
@@ -58,13 +60,14 @@ Si falla cualquiera de las dos, la fecha se marca como **No disponible**.
 - **Backend API:** FastAPI
 - **Orquestacion IA:** LangChain
 - **Modelo LLM:** OpenAI
-- **Despliegue:** Vercel (**Pendiente ⏳**)
+- **Despliegue:** Vercel ([https://enae-vet-es.vercel.app](https://enae-vet-es.vercel.app))
 
 ## ⚙️ Comandos Operativos (.cursor/commands)
 
 ### `/enrich`
 
 Comando para enriquecer tickets Jira existentes (especialmente para PM):
+
 - Completa descripcion con arquitectura, tecnologias, flujo, glosario de docs, out of scope y CAC.
 - Mejora claridad y trazabilidad antes de implementar.
 
@@ -73,6 +76,7 @@ Referencia: `.cursor/commands/enrich.md`
 ### `/implement-ticket`
 
 Comando para ejecutar tickets de punta a punta:
+
 - Lee ticket y CAC.
 - Implementa cambios en codigo/documentacion.
 - Ejecuta validaciones.
@@ -82,13 +86,16 @@ Referencia: `.cursor/commands/implement-ticket.md`
 
 ## 📊 Estado del Backlog (VET)
 
-| Ticket | Descripcion | Estado |
-| :--- | :--- | :--- |
-| VET-1 | Repo base y accesos | Hecho ✅ |
-| VET-2 | README Maestro | Hecho ✅ |
-| VET-14 | Documentacion de dominio | Hecho ✅ |
-| VET-3 | Configuracion y despliegue en Vercel | Pendiente ⏳ |
-| VET-7 a VET-13 | Implementacion del chatbot | Pendiente ⏳ |
+
+| Ticket         | Descripcion                          | Estado      |
+| -------------- | ------------------------------------ | ----------- |
+| VET-1          | Repo base y accesos                  | Hecho ✅     |
+| VET-2          | README Maestro                       | Hecho ✅     |
+| VET-14         | Documentacion de dominio             | Hecho ✅     |
+| VET-4          | Reglas SDD (Repo + Jira)             | Hecho ✅     |
+| VET-3          | Configuracion y despliegue en Vercel | Pendiente ⏳ |
+| VET-7 a VET-13 | Implementacion del chatbot           | Pendiente ⏳ |
+
 
 Backlog detallado: `.cursor/docs/Tickets.md`
 
