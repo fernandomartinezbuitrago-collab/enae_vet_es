@@ -1,93 +1,103 @@
-# Chatbot Clinica Veterinaria - MVP Esterilizacion
+# 🐾 Chatbot Clinica Veterinaria - Documento Maestro (Fuente de la Verdad)
 
-Repositorio del MVP para asistir en dudas preoperatorias y soporte operativo de esterilizacion/castracion en clinica veterinaria.
+Este `README.MD` es la referencia principal del proyecto para alcance funcional, reglas de negocio, stack tecnico, flujo operativo y estado del backlog.
 
-## Vision del producto (MVP)
+## 🎯 Vision del Proyecto (MVP Esterilizaciones)
 
-- Reducir la carga administrativa del equipo con respuestas guiadas y consistentes.
-- Estandarizar la informacion preoperatoria para tutores de mascotas.
-- Preparar la base para integracion de agenda y validacion de disponibilidad.
+El proyecto implementa un chatbot para una clinica veterinaria enfocada en medicina preventiva, especialmente esterilizaciones caninas y felinas.  
+El MVP prioriza tres objetivos:
 
-## Miembros del equipo
+- Guiar al cliente con informacion preoperatoria clara y segura.
+- Reducir carga administrativa en la reserva y confirmacion de citas.
+- Validar disponibilidad segun reglas estrictas de agenda ("El Tetris") antes de confirmar.
 
-- Product Manager: TBD
-- Backend: TBD
-- Frontend: TBD
-- QA/Soporte: TBD
+Alcance del MVP:
+- Reservas de esterilizacion (perros y gatos).
+- Validacion automatica de cupos por minutos y limite de perros por dia.
+- Mensajeria de confirmacion con ventana de entrega y protocolo de ayuno.
 
-## Enlaces del proyecto
+## 📚 Documentacion de Dominio
+
+Fuente funcional y de negocio del proyecto:
+
+- [`docs/preparatorio.md`](docs/preparatorio.md): contexto clinico, protocolo pre y post operatorio, requisitos para una esterilizacion segura.
+- [`docs/reglas_negocio.md`](docs/reglas_negocio.md): reglas formales de agenda, tabla maestra de tiempos y restricciones del algoritmo.
+- [`docs/event_storming.md`](docs/event_storming.md): diagrama del flujo end-to-end (comandos, eventos, politicas y validaciones).
+
+## 🧠 Reglas de Negocio (El Tetris)
+
+Resumen ejecutivo basado en `docs/reglas_negocio.md`:
+
+- **Capacidad diaria maxima:** `240 minutos` por dia quirurgico.
+- **Dias operativos para cirugia:** lunes a jueves.
+- **Limite de perros:** maximo `2 perros` por dia (aunque sobren minutos).
+- **Gatos:** sin limite de cantidad; se limita solo por minutos disponibles.
+
+### Tiempos de cirugia (coste en minutos)
+
+- **Gato macho:** 12 min
+- **Gata hembra:** 15 min
+- **Perro macho (cualquier peso):** 30 min
+- **Perra 0-10 kg:** 45 min
+- **Perra 10-20 kg:** 50 min
+- **Perra 20-30 kg:** 60 min
+- **Perra 30-40 kg:** 60 min
+- **Perra >40 kg:** 70 min
+
+### Reglas de bloqueo
+
+Una fecha solo es valida si se cumplen ambas condiciones:
+
+1. `(minutos_ocupados + minutos_nueva_cita) <= 240`
+2. Si la especie es perro: `(perros_del_dia + 1) <= 2`
+
+Si falla cualquiera de las dos, la fecha se marca como **No disponible**.
+
+## 🛠️ Stack Tecnico
+
+- **Backend API:** FastAPI
+- **Orquestacion IA:** LangChain
+- **Modelo LLM:** OpenAI
+- **Despliegue:** Vercel (**Pendiente ⏳**)
+
+## ⚙️ Comandos Operativos (.cursor/commands)
+
+### `/enrich`
+
+Comando para enriquecer tickets Jira existentes (especialmente para PM):
+- Completa descripcion con arquitectura, tecnologias, flujo, glosario de docs, out of scope y CAC.
+- Mejora claridad y trazabilidad antes de implementar.
+
+Referencia: `.cursor/commands/enrich.md`
+
+### `/implement-ticket`
+
+Comando para ejecutar tickets de punta a punta:
+- Lee ticket y CAC.
+- Implementa cambios en codigo/documentacion.
+- Ejecuta validaciones.
+- Prepara rama/PR y acompana el flujo de estados Jira.
+
+Referencia: `.cursor/commands/implement-ticket.md`
+
+## 📊 Estado del Backlog (VET)
+
+| Ticket | Descripcion | Estado |
+| :--- | :--- | :--- |
+| VET-1 | Repo base y accesos | Hecho ✅ |
+| VET-2 | README Maestro | Hecho ✅ |
+| VET-14 | Documentacion de dominio | Hecho ✅ |
+| VET-3 | Configuracion y despliegue en Vercel | Pendiente ⏳ |
+| VET-7 a VET-13 | Implementacion del chatbot | Pendiente ⏳ |
+
+Backlog detallado: `.cursor/docs/Tickets.md`
+
+## 🔗 Enlaces de Proyecto
 
 - Jira (proyecto): [FERNANDO - Enae-vet-es](https://fernandomartinezbuitrago.atlassian.net/jira/software/projects/FERNANDO/summary)
-- Ticket activo README maestro: [FERNANDO-14](https://fernandomartinezbuitrago.atlassian.net/browse/FERNANDO-14)
-- Vercel (deploy): TBD
-- URL publica del chatbot: TBD
+- Ticket VET-2 equivalente en Jira: [FERNANDO-14](https://fernandomartinezbuitrago.atlassian.net/browse/FERNANDO-14)
+- Ticket VET-3 equivalente en Jira: [FERNANDO-15](https://fernandomartinezbuitrago.atlassian.net/browse/FERNANDO-15)
 
-## Estructura esperada del repositorio
+## ✅ Criterio de Mantenimiento del README
 
-La estructura tecnica aun esta en evolucion. Como guia base:
-
-- `README.MD`: documento maestro del proyecto.
-- `.cursor/docs/Tickets.md`: backlog de referencia para epics y tickets.
-- `.cursor/commands/`: comandos operativos del flujo del equipo.
-- `.cursor/skills/`: skills de soporte para PM y desarrollo.
-
-## Instalacion local (base)
-
-> Nota: si cambian los comandos reales del proyecto, actualiza esta seccion en el mismo ticket o en un ticket de mantenimiento documental.
-
-1. Clona el repositorio.
-2. Crea y activa entorno virtual.
-3. Instala dependencias del proyecto.
-4. Configura variables de entorno.
-5. Arranca la aplicacion en modo local.
-
-Ejemplo de comandos (ajustar si aplica):
-
-```bash
-python -m venv .venv
-# Windows (PowerShell)
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-## Variables de entorno
-
-Crear archivo `.env` local (no subirlo al repositorio):
-
-```env
-OPENAI_API_KEY=your_key_here
-API_BASE_URL=http://localhost:8000
-```
-
-Reglas:
-
-- No incluir secretos reales en commits.
-- Mantener `.env` fuera de versionado.
-- Configurar secretos de produccion solo en Vercel/Jira Vault si aplica.
-
-## Flujo Git -> Build -> URL
-
-1. Crear rama por ticket: `feature/VET-XX`.
-2. Implementar cambios y abrir Pull Request contra `main`.
-3. Ejecutar validaciones (lint/tests/manuales) antes de merge.
-4. Merge a `main`.
-5. Verificar build y despliegue en Vercel.
-6. Confirmar URL publica funcional.
-
-## Checklist de tickets VET
-
-- [ ] Ticket Jira enlazado en PR.
-- [ ] Alcance y CAC revisados antes de implementar.
-- [ ] Cambios documentados en `README.MD` o `docs`/`.cursor/docs` cuando aplique.
-- [ ] Evidencias de validacion adjuntas (capturas/logs/tests).
-- [ ] Estado del ticket actualizado (`Por hacer` -> `En curso` -> `En revision` -> `Listo`).
-
-## Backlog de referencia (TBD)
-
-- Fuente principal: `.cursor/docs/Tickets.md`
-- Priorizacion por sprint: TBD
-- Dependencias tecnicas: TBD
-
-## Estado del documento
-
-Este README se considera una plantilla viva. Se actualiza progresivamente conforme se implementan tickets VET.
+Cada cambio funcional relevante debe reflejarse aqui para mantener este documento como **fuente de la verdad** del proyecto.
