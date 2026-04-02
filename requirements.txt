@@ -4,4 +4,4 @@ pydantic
 langchain
 langchain-google-genai
 python-dotenv
-Jinja2
+jinja2

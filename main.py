@@ -18,8 +18,15 @@ templates = Jinja2Templates(directory="templates")
 class ChatMessage(BaseModel):
     message: str
 
-# Configurar el "Cerebro" de Gemini
-llm = ChatGoogleGenerativeAI(model="gemini-pro")
+# Cargar variables de entorno
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
+
+# Configurar el "Cerebro" de Gemini forzando la API Key
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash", 
+    google_api_key=api_key
+)
 
 # Configurar la personalidad del Bot (El System Prompt)
 prompt_template = ChatPromptTemplate.from_messages([
