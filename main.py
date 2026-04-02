@@ -1,14 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 app = FastAPI(title="Chatbot Clínica Veterinaria - MVP")
+templates = Jinja2Templates(directory="templates") # <--- NUEVA LÍNEA
 
 class ChatMessage(BaseModel):
     message: str
 
-@app.get("/")
-async def root():
-    return {"status": "online", "message": "Servidor de la Clínica Veterinaria funcionando"}
+@app.get("/", response_class=HTMLResponse) # <--- CAMBIADO
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/health")
 async def health_check():
