@@ -2,6 +2,6 @@ fastapi
 uvicorn
 pydantic
 langchain
-openai
+langchain-google-genai
 python-dotenv
 Jinja2
