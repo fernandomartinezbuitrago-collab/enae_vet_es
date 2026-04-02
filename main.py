@@ -5,12 +5,18 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# Importaciones de LangChain para Gemini
+# Importar las librerías de Google y LangChain
+import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 
-# Cargar variables de entorno (tu GOOGLE_API_KEY)
+# 1. Cargar variables de entorno
 load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
+
+# 2. Configurar la librería base de Google (para el diagnóstico)
+if api_key:
+    genai.configure(api_key=api_key)
 
 app = FastAPI(title="Chatbot Clínica Veterinaria - MVP")
 templates = Jinja2Templates(directory="templates")
@@ -18,46 +24,50 @@ templates = Jinja2Templates(directory="templates")
 class ChatMessage(BaseModel):
     message: str
 
-# Cargar variables de entorno
-load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
-
-# Configurar el "Cerebro" de Gemini forzando la API Key
+# 3. Configurar el Cerebro
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash", 
     google_api_key=api_key
 )
 
-# Configurar la personalidad del Bot (El System Prompt)
 prompt_template = ChatPromptTemplate.from_messages([
-    ("system", "Eres un asistente virtual experto de una clínica veterinaria. Eres amable, profesional y conciso. Ayudas a los dueños de mascotas con dudas sobre preparativos médicos y esterilizaciones."),
+    ("system", "Eres un asistente virtual experto de una clínica veterinaria. Eres amable, profesional y conciso."),
     ("user", "{input}")
 ])
-
-# Unir el prompt con el modelo
 chain = prompt_template | llm
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
+# 🔥 EL NUEVO DIAGNÓSTICO ESTÁ AQUÍ 🔥
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "veterinary-backend"}
+    try:
+        # Extraemos los primeros 5 caracteres de la llave para asegurar que Vercel la está leyendo
+        key_preview = api_key[:5] + "..." if api_key else "¡ERROR! LA LLAVE ESTÁ VACÍA"
+        
+        # Le pedimos a Google la lista de modelos disponibles para ESTA llave
+        modelos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        return {
+            "status": "ok",
+            "llave_detectada": key_preview,
+            "modelos_disponibles": modelos
+        }
+    except Exception as e:
+        return {"status": "error", "detalle": str(e)}
 
 @app.post("/chat/test")
 async def chat_test(chat_msg: ChatMessage):
     try:
-        # Aquí ocurre la magia: Le pasamos el mensaje del usuario a LangChain/Gemini
         respuesta_ia = chain.invoke({"input": chat_msg.message})
-        
         return {
             "response": respuesta_ia.content,
             "status": "success"
         }
     except Exception as e:
-        # Si la API Key falla o hay un error, lo veremos aquí
         return {
-            "response": f"Lo siento, mis circuitos veterinarios fallaron: {str(e)}",
+            "response": f"Error del sistema: {str(e)}",
             "status": "error"
         }
