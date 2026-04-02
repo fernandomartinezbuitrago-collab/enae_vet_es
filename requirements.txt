@@ -4,3 +4,4 @@ pydantic
 langchain
 openai
 python-dotenv
+Jinja2
