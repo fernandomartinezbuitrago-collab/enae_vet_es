@@ -25,27 +25,48 @@
     </div>
 
     <script>
-        async def sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('user-input');
             const messages = document.getElementById('messages');
-            if (!input.value) return;
+            const text = input.value.trim();
 
-            // Mostrar mensaje del usuario
-            messages.innerHTML += `<p><strong>Tú:</strong> ${input.value}</p>`;
-            
-            // Llamar al backend (endpoint de prueba que creamos en VET-7)
-            const response = await fetch('/chat/test', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: input.value })
-            });
-            const data = await response.json();
-            
-            // Mostrar respuesta del bot
-            messages.innerHTML += `<p><strong>Bot:</strong> ${data.response}</p>`;
+            if (!text) return; // Si está vacío, no hace nada
+
+            // 1. Mostrar tu mensaje inmediatamente y limpiar la caja
+            messages.innerHTML += `<p><strong>Tú:</strong> ${text}</p>`;
             input.value = '';
+            messages.scrollTop = messages.scrollHeight; // Hacer scroll hacia abajo
+
+            try {
+                // 2. Llamar al servidor
+                const response = await fetch('/chat/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error("El servidor devolvió error " + response.status);
+                }
+
+                // 3. Mostrar la respuesta
+                const data = await response.json();
+                messages.innerHTML += `<p><strong>Bot:</strong> ${data.response}</p>`;
+                
+            } catch (error) {
+                // 4. Si algo falla, avisar en pantalla
+                messages.innerHTML += `<p style="color:red;"><strong>Error:</strong> No pude conectar con el servidor.</p>`;
+                console.error("Error en el chat:", error);
+            }
             messages.scrollTop = messages.scrollHeight;
         }
+
+        // Permitir enviar pulsando la tecla Enter
+        document.getElementById('user-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>
