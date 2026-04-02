@@ -19,7 +19,7 @@ class ChatMessage(BaseModel):
     message: str
 
 # Configurar el "Cerebro" de Gemini
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
 # Configurar la personalidad del Bot (El System Prompt)
 prompt_template = ChatPromptTemplate.from_messages([
