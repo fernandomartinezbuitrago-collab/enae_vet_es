@@ -13,6 +13,10 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.document_loaders import WebBaseLoader
 
+# NUEVAS IMPORTACIONES PARA AGENTES Y HERRAMIENTAS
+from langchain_core.tools import tool
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+
 # 1. Cargar variables de entorno
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
@@ -20,7 +24,7 @@ api_key = os.getenv("GOOGLE_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
 
-app = FastAPI(title="Chatbot Clínica Veterinaria - RAG")
+app = FastAPI(title="Chatbot Clínica Veterinaria - Agente con Tools")
 templates = Jinja2Templates(directory="templates")
 
 class ChatMessage(BaseModel):
@@ -36,49 +40,66 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
         store[session_id].messages = store[session_id].messages[-10:]
     return store[session_id]
 
+# ==========================================
+# 🔥 INICIO DE MOCK TOOL (Ticket VET-12)
+# ==========================================
+@tool
+def comprobar_disponibilidad(fecha: str, hora: str) -> str:
+    """
+    IMPORTANTE: Úsala SIEMPRE que el usuario quiera pedir cita o pregunte por disponibilidad.
+    Consulta la disponibilidad de la clínica simulando una base de datos.
+    Requiere una fecha y una hora aproximada.
+    """
+    # Contrato de E/S simulado (Criterios de Aceptación)
+    if "10" in hora:
+        return "Resultado de la BBDD: DISPONIBLE. Hay un hueco libre a esa hora."
+    elif "11" in hora:
+        return "Resultado de la BBDD: NO DISPONIBLE. La agenda está totalmente llena."
+    else:
+        return "Resultado de la BBDD: ERROR. El sistema de agenda está caído o la hora es inválida."
+
+# Añadimos nuestra herramienta a la "caja de herramientas" de la IA
+tools = [comprobar_disponibilidad]
+# ==========================================
+# 🔥 FIN DE MOCK TOOL
+# ==========================================
+
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash", 
     google_api_key=api_key
 )
 
-# ==========================================
-# 🔥 INICIO DE RAG (Ingesta de Fuente Oficial)
-# ==========================================
-# URL oficial sobre la que el bot va a aprender (puedes cambiarla por la de tu clínica si tienes)
 URL_OFICIAL = "https://es.wikipedia.org/wiki/Castraci%C3%B3n" 
-
 try:
-    # 1. Ingiere y consulta la URL
     loader = WebBaseLoader(URL_OFICIAL)
     docs = loader.load()
-    texto_fuente = docs[0].page_content[:15000] # Cogemos los primeros 15.000 caracteres
+    texto_fuente = docs[0].page_content[:15000]
     
-    # 2. Obligamos al bot a citar la fuente y basarse en ella
-    mensaje_sistema = f"""Eres un asistente virtual experto de una clínica veterinaria. Eres amable y profesional.
-    IMPORTANTE: Debes basar tus respuestas EXCLUSIVAMENTE en la siguiente INFORMACIÓN OFICIAL de la clínica.
-    Si el usuario pregunta algo que no está en esta información oficial, responde: "Lo siento, según la información oficial de la clínica no tengo ese dato. Por favor, contacta directamente con nuestro mostrador."
+    # Modificamos el prompt para que sepa cuándo usar RAG y cuándo usar Tools
+    mensaje_sistema = f"""Eres un asistente de una clínica veterinaria.
+    Reglas de comportamiento:
+    1. Para dudas médicas, responde EXCLUSIVAMENTE basándote en la INFORMACIÓN OFICIAL. Si no está, di que no lo sabes.
+    2. Si el usuario quiere consultar disponibilidad o pedir cita, NO mires la información oficial. USA INMEDIATAMENTE la herramienta 'comprobar_disponibilidad'.
     
-    INFORMACIÓN OFICIAL OBTENIDA DE LA URL:
+    INFORMACIÓN OFICIAL:
     {texto_fuente}
     """
 except Exception as e:
-    # 3. Manejo de errores cuando la fuente no está disponible
-    print(f"Error cargando la fuente: {e}")
-    mensaje_sistema = "Eres un asistente de clínica veterinaria. (AVISO INTERNO: La fuente de datos oficial está caída, responde bajo tu propio conocimiento pero avisa de esto al cliente)."
-# ==========================================
-# 🔥 FIN DE RAG
-# ==========================================
+    mensaje_sistema = "Eres un asistente de clínica. La fuente falló, pero puedes usar tus herramientas para buscar citas."
 
 prompt_template = ChatPromptTemplate.from_messages([
     ("system", mensaje_sistema),
     MessagesPlaceholder(variable_name="history"),
-    ("user", "{input}")
+    ("user", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"), # ESPACIO PARA QUE LA IA "PIENSE" AL USAR TOOLS
 ])
 
-chain = prompt_template | llm
+# En lugar de una cadena básica, creamos un "Agente"
+agent = create_tool_calling_agent(llm, tools, prompt_template)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 conversational_chain = RunnableWithMessageHistory(
-    chain,
+    agent_executor,
     get_session_history,
     input_messages_key="input",
     history_messages_key="history"
@@ -88,10 +109,6 @@ conversational_chain = RunnableWithMessageHistory(
 async def root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "estado_rag": "Fuente cargada correctamente" if "INFORMACIÓN OFICIAL" in mensaje_sistema else "Error al cargar fuente"}
-
 @app.post("/chat/test")
 async def chat_test(chat_msg: ChatMessage):
     try:
@@ -99,6 +116,7 @@ async def chat_test(chat_msg: ChatMessage):
             {"input": chat_msg.message},
             config={"configurable": {"session_id": chat_msg.session_id}}
         )
-        return {"response": respuesta_ia.content, "status": "success"}
+        # ⚠️ IMPORTANTE: Un Agente devuelve un diccionario con "output", no "content"
+        return {"response": respuesta_ia["output"], "status": "success"}
     except Exception as e:
         return {"response": f"Error del sistema: {str(e)}", "status": "error"}
