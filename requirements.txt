@@ -4,5 +4,7 @@ pydantic
 langchain
 langchain-google-genai
 google-generativeai
+langchain-community
+beautifulsoup4
 python-dotenv
 jinja2
