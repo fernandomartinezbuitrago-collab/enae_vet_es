@@ -1,10 +1,10 @@
 fastapi
 uvicorn
 pydantic
-langchain
+langchain<0.3.0
+langchain-community<0.3.0
 langchain-google-genai
 google-generativeai
-langchain-community
 beautifulsoup4
 python-dotenv
 jinja2
