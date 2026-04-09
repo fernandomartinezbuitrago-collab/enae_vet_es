@@ -21,9 +21,7 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 # 1. Cargar variables de entorno
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
-calendar_id = c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com
-
-if api_key:
+calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com"
     genai.configure(api_key=api_key)
 
 app = FastAPI(title="Chatbot Clínica Veterinaria - PRO")
