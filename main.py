@@ -18,24 +18,20 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.tools import tool
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 
-# 1. Cargar variables de entorno (SALTÁNDONOS VERCEL)
+# 1. Cargar variables de entorno (SALTÁNDONOS VERCEL POR COMPLETO)
 load_dotenv()
 
-# Pega aquí dentro de las comillas tu llave de Google AI Studio (Gemini)
 api_key = "AIzaSyCdpYOFXMR-SQECA0mldSoQPbeosat3Zno" 
-
-# Pega aquí dentro de las comillas tu llave de Google Cloud (Calendario)
 calendar_api_key = "AIzaSyAyKMcZQh2M4pJsvQ3TaTGm4PLIrNKWCAU" 
-
-# Tu ID del calendario (que ya vimos que estaba perfecto)
 calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com"
+
+# ESTO OBLIGA A LA IA A USAR ESTA LLAVE SÍ O SÍ (mata el error 403)
+os.environ["GOOGLE_API_KEY"] = api_key
 
 if api_key:
     genai.configure(api_key=api_key)
 
-app = FastAPI(title="Chatbot Clínica Veterinaria - PRO")
-
-# 👇 ESTA ES LA LÍNEA QUE VERCEL ESTÁ LLORANDO PORQUE NO ENCUENTRA 👇
+# Inicializar FastAPI (SOLO UNA VEZ)
 app = FastAPI(title="Chatbot Clínica Veterinaria - PRO")
 templates = Jinja2Templates(directory="templates")
 
@@ -78,8 +74,8 @@ def comprobar_disponibilidad(fecha: str, hora: str) -> str:
         # Codificar el ID del calendario (vital si es un email con @)
         cal_seguro = urllib.parse.quote(calendar_id)
         
-        # Consultar la API oficial de Google Calendar
-        url = f"https://www.googleapis.com/calendar/v3/calendars/{cal_seguro}/events?key={api_key}&timeMin={fecha}T00:00:00Z&timeMax={fecha}T23:59:59Z&singleEvents=true"
+        # Consultar la API oficial de Google Calendar CON SU LLAVE CORRECTA
+        url = f"https://www.googleapis.com/calendar/v3/calendars/{cal_seguro}/events?key={calendar_api_key}&timeMin={fecha}T00:00:00Z&timeMax={fecha}T23:59:59Z&singleEvents=true"
         
         respuesta = requests.get(url)
         
@@ -104,7 +100,7 @@ def comprobar_disponibilidad(fecha: str, hora: str) -> str:
     except Exception as e:
         return f"DILE AL USUARIO LITERALMENTE ESTO: Error de Python: {str(e)}"
 
-# 👇 ESTA ES LA LÍNEA QUE FALTABA 👇
+# Herramientas del agente
 tools = [comprobar_disponibilidad]
 
 # ==========================================
