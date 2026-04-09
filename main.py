@@ -22,7 +22,7 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 load_dotenv()
 
 api_key = os.getenv("GOOGLE_API_KEY")
-CAcalendar_api_key = os.getenv("CALENDAR_API_KEY")
+calendar_api_key = os.getenv("CALENDAR_API_KEY")
 calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com"
 
 if api_key:
