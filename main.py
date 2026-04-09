@@ -93,6 +93,10 @@ def comprobar_disponibilidad(fecha: str, hora: str) -> str:
             
     except Exception as e:
         return f"DILE AL USUARIO LITERALMENTE ESTO: Error de Python: {str(e)}"
+
+# 👇 ESTA ES LA LÍNEA QUE FALTABA 👇
+tools = [comprobar_disponibilidad]
+
 # ==========================================
 # 🔥 FIN DE INTEGRACIÓN
 # ==========================================
