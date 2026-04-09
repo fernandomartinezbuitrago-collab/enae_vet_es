@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import urllib.parse
 
 import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -52,40 +53,46 @@ def comprobar_disponibilidad(fecha: str, hora: str) -> str:
     La 'hora' DEBE estar en formato HH:MM.
     """
     if not calendar_id:
-        return "Error interno: El ID del calendario no está configurado."
+        return "DILE AL USUARIO: Error interno, el ID del calendario no está configurado en Vercel."
     
     try:
-        # Regla de negocio: La clínica solo abre de 09:00 a 20:00
-        hora_int = int(hora.split(":")[0])
+        # Limpiar la hora por si el usuario escribe "10.00" o "12"
+        hora_limpia = hora.replace(".", ":")
+        if ":" not in hora_limpia:
+            hora_limpia += ":00"
+            
+        hora_int = int(hora_limpia.split(":")[0])
         if hora_int < 9 or hora_int >= 20:
-            return "Fuera de horario. La clínica solo atiende de 09:00 a 20:00."
+            return "DILE AL USUARIO: Fuera de horario. La clínica solo atiende de 09:00 a 20:00."
 
+        # Codificar el ID del calendario (vital si es un email con @)
+        cal_seguro = urllib.parse.quote(calendar_id)
+        
         # Consultar la API oficial de Google Calendar
-        url = f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events?key={api_key}&timeMin={fecha}T00:00:00Z&timeMax={fecha}T23:59:59Z&singleEvents=true"
+        url = f"https://www.googleapis.com/calendar/v3/calendars/{cal_seguro}/events?key={api_key}&timeMin={fecha}T00:00:00Z&timeMax={fecha}T23:59:59Z&singleEvents=true"
         
         respuesta = requests.get(url)
+        
+        # EL CHIVATO: Si Google nos bloquea, obligamos al bot a darnos el código exacto
         if respuesta.status_code != 200:
-            return "Error de conexión con el calendario oficial."
+            return f"DILE AL USUARIO LITERALMENTE ESTO: Error de Google API - HTTP {respuesta.status_code}: {respuesta.text}"
         
         eventos = respuesta.json().get("items", [])
         
-        # Comprobar si la hora solicitada está dentro de algún evento existente
         ocupado = False
         for evento in eventos:
             inicio_evento = evento.get("start", {}).get("dateTime", "")
-            if hora in inicio_evento:
+            if hora_limpia in inicio_evento:
                 ocupado = True
                 break
                 
         if ocupado:
-            return f"Lo siento, a las {hora} el {fecha} la agenda está OCUPADA."
+            return f"Lo siento, a las {hora_limpia} el {fecha} la agenda está OCUPADA."
         else:
-            return f"¡Buenas noticias! El {fecha} a las {hora} el calendario está LIBRE."
+            return f"¡Buenas noticias! El {fecha} a las {hora_limpia} el calendario está LIBRE."
             
     except Exception as e:
-        return f"Error procesando la consulta: {str(e)}"
-
-tools = [comprobar_disponibilidad]
+        return f"DILE AL USUARIO LITERALMENTE ESTO: Error de Python: {str(e)}"
 # ==========================================
 # 🔥 FIN DE INTEGRACIÓN
 # ==========================================
