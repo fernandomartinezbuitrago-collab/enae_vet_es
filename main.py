@@ -1,13 +1,13 @@
 import os
 import requests
 import datetime
+import urllib.parse
 from typing import Dict
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import urllib.parse
 
 import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -21,9 +21,15 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 # 1. Cargar variables de entorno
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
+calendar_api_key = os.getenv("CALENDAR_API_KEY") 
+
+# El ID con sus comillas perfectas:
 calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com"
+
+if api_key:
     genai.configure(api_key=api_key)
 
+# 👇 ESTA ES LA LÍNEA QUE VERCEL ESTÁ LLORANDO PORQUE NO ENCUENTRA 👇
 app = FastAPI(title="Chatbot Clínica Veterinaria - PRO")
 templates = Jinja2Templates(directory="templates")
 
