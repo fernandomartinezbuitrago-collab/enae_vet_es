@@ -18,16 +18,22 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.tools import tool
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 
-# 1. Cargar variables de entorno
+# 1. Cargar variables de entorno (SALTÁNDONOS VERCEL)
 load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
-calendar_api_key = os.getenv("CALENDAR_API_KEY") 
 
-# El ID con sus comillas perfectas:
+# Pega aquí dentro de las comillas tu llave de Google AI Studio (Gemini)
+api_key = "AIzaSyCdpYOFXMR-SQECA0mldSoQPbeosat3Zno" 
+
+# Pega aquí dentro de las comillas tu llave de Google Cloud (Calendario)
+calendar_api_key = "AIzaSyAyKMcZQh2M4pJsvQ3TaTGm4PLIrNKWCAU" 
+
+# Tu ID del calendario (que ya vimos que estaba perfecto)
 calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com"
 
 if api_key:
     genai.configure(api_key=api_key)
+
+app = FastAPI(title="Chatbot Clínica Veterinaria - PRO")
 
 # 👇 ESTA ES LA LÍNEA QUE VERCEL ESTÁ LLORANDO PORQUE NO ENCUENTRA 👇
 app = FastAPI(title="Chatbot Clínica Veterinaria - PRO")
