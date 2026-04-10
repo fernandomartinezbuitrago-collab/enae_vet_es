@@ -89,7 +89,7 @@ tools = [comprobar_disponibilidad]
 # ==========================================
 # 🧠 CEREBRO Y RAG (URL OBLIGATORIA +1 PT)
 # ==========================================
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key)
+llm = ChatGoogleGenerativeAI(model=model="gemini-1.5-flash-latest", google_api_key=api_key)
 
 # CAMBIO CRÍTICO: Fuente exigida por el profesor para el punto extra
 URL_RAG_OBLIGATORIA = "https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation" 
