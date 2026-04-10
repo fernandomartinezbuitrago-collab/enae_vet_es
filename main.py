@@ -76,9 +76,9 @@ def comprobar_disponibilidad(fecha: str, hora: str) -> str:
         
         respuesta = requests.get(url)
         
-        # EL CHIVATO: Si Google nos bloquea, obligamos al bot a darnos el código exacto
-        if respuesta.status_code != 200:
-            return f"DILE AL USUARIO LITERALMENTE ESTO: Error de Google API - HTTP {respuesta.status_code}: {respuesta.text}"
+       # EL CHIVATO SUPREMO: Ver qué llave está usando realmente
+if respuesta.status_code != 200:
+    return f"DILE AL USUARIO LITERALMENTE ESTO: La llave del calendario que estoy usando es '{calendar_api_key}'. Error {respuesta.status_code}."
         
         eventos = respuesta.json().get("items", [])
         
