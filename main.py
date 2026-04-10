@@ -18,7 +18,7 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.tools import tool
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 
-# 1. Cargar variables de entorno (SALTÁNDONOS VERCEL POR COMPLETO)
+# 1. Cargar variables de entorno (LIMPIO Y SEGURO PARA VERCEL)
 load_dotenv()
 
 api_key = os.getenv("GOOGLE_API_KEY")
@@ -28,7 +28,6 @@ calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@
 if api_key:
     genai.configure(api_key=api_key)
 
-# Inicializar FastAPI (SOLO UNA VEZ)
 app = FastAPI(title="Chatbot Clínica Veterinaria - PRO")
 templates = Jinja2Templates(directory="templates")
 
@@ -46,7 +45,7 @@ def get_session_history(session_id: str) -> InMemoryChatMessageHistory:
     return store[session_id]
 
 # ==========================================
-# 🔥 INICIO: INTEGRACIÓN CON CALENDARIO REAL (VET-13)
+# 🔥 INTEGRACIÓN CON CALENDARIO (VET-13)
 # ==========================================
 @tool
 def comprobar_disponibilidad(fecha: str, hora: str) -> str:
@@ -56,77 +55,64 @@ def comprobar_disponibilidad(fecha: str, hora: str) -> str:
     La 'hora' DEBE estar en formato HH:MM.
     """
     if not calendar_id:
-        return "DILE AL USUARIO: Error interno, el ID del calendario no está configurado en Vercel."
+        return "DILE AL USUARIO: Error interno con el ID del calendario."
     
     try:
-        # Limpiar la hora por si el usuario escribe "10.00" o "12"
         hora_limpia = hora.replace(".", ":")
         if ":" not in hora_limpia:
             hora_limpia += ":00"
             
         hora_int = int(hora_limpia.split(":")[0])
         if hora_int < 9 or hora_int >= 20:
-            return "DILE AL USUARIO: Fuera de horario. La clínica solo atiende de 09:00 a 20:00."
+            return "DILE AL USUARIO: Fuera de horario. La clínica atiende de 09:00 a 20:00."
 
-        # Codificar el ID del calendario (vital si es un email con @)
         cal_seguro = urllib.parse.quote(calendar_id)
-        
-        # Consultar la API oficial de Google Calendar CON SU LLAVE CORRECTA
         url = f"https://www.googleapis.com/calendar/v3/calendars/{cal_seguro}/events?key={calendar_api_key}&timeMin={fecha}T00:00:00Z&timeMax={fecha}T23:59:59Z&singleEvents=true"
         
         respuesta = requests.get(url)
         
-       # EL CHIVATO SUPREMO: Ver qué llave está usando realmente
-if respuesta.status_code != 200:
-    return f"DILE AL USUARIO LITERALMENTE ESTO: La llave del calendario que estoy usando es '{calendar_api_key}'. Error {respuesta.status_code}."
+        if respuesta.status_code != 200:
+            return f"Error técnico (Código {respuesta.status_code}). Avise al soporte."
         
         eventos = respuesta.json().get("items", [])
-        
-        ocupado = False
-        for evento in eventos:
-            inicio_evento = evento.get("start", {}).get("dateTime", "")
-            if hora_limpia in inicio_evento:
-                ocupado = True
-                break
+        ocupado = any(hora_limpia in ev.get("start", {}).get("dateTime", "") for ev in eventos)
                 
         if ocupado:
             return f"Lo siento, a las {hora_limpia} el {fecha} la agenda está OCUPADA."
-        else:
-            return f"¡Buenas noticias! El {fecha} a las {hora_limpia} el calendario está LIBRE."
+        return f"¡Buenas noticias! El {fecha} a las {hora_limpia} el calendario está LIBRE."
             
     except Exception as e:
-        return f"DILE AL USUARIO LITERALMENTE ESTO: Error de Python: {str(e)}"
+        return f"Error de sistema: {str(e)}"
 
-# Herramientas del agente
 tools = [comprobar_disponibilidad]
 
 # ==========================================
-# 🔥 FIN DE INTEGRACIÓN
+# 🧠 CEREBRO Y RAG (URL OBLIGATORIA +1 PT)
 # ==========================================
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=api_key)
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=api_key)
+# CAMBIO CRÍTICO: Fuente exigida por el profesor para el punto extra
+URL_RAG_OBLIGATORIA = "https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation" 
 
-URL_OFICIAL = "https://es.wikipedia.org/wiki/Castraci%C3%B3n" 
 try:
-    loader = WebBaseLoader(URL_OFICIAL)
+    loader = WebBaseLoader(URL_RAG_OBLIGATORIA)
     docs = loader.load()
     texto_fuente = docs[0].page_content[:15000]
-    
-    # Inyectamos la fecha real de HOY en el cerebro de la IA
     hoy = datetime.date.today().strftime("%Y-%m-%d")
-    mensaje_sistema = f"""Eres un asistente de una clínica veterinaria.
-    HOY ES: {hoy}. Usa esta fecha para calcular cuándo es 'mañana' o 'el próximo martes'.
     
-    Reglas:
-    1. Para dudas médicas, responde basándote en la INFORMACIÓN OFICIAL.
-    2. Si preguntan disponibilidad de citas, usa la herramienta 'comprobar_disponibilidad'. No te inventes las horas.
+    mensaje_sistema = f"""Eres un asistente de una clínica veterinaria. Hoy es {hoy}.
     
-    INFORMACIÓN OFICIAL:
+    INSTRUCCIONES PREOPERATORIAS (RAG):
     {texto_fuente}
+    
+    REGLAS:
+    1. Responde dudas médicas solo con la información anterior.
+    2. Usa 'comprobar_disponibilidad' para citas.
+    3. Mantén la memoria del paciente (perro/gato, edad).
     """
-except Exception as e:
+except Exception:
     hoy = datetime.date.today().strftime("%Y-%m-%d")
-    mensaje_sistema = f"Eres un asistente veterinario. Hoy es {hoy}. La fuente falló, pero puedes usar tus herramientas para buscar citas."
+    mensaje_sistema = f"Asistente veterinario. Hoy es {hoy}. Usa tus herramientas para citas."
 
 prompt_template = ChatPromptTemplate.from_messages([
     ("system", mensaje_sistema),
