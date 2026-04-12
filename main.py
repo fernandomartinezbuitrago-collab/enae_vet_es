@@ -52,9 +52,10 @@ def comprobar_disponibilidad(fecha: str) -> str:
 
 # --- SOLUCIÓN AL 404: Configuración Robusta ---
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash", # Modelo estándar con capa gratuita
+    model="gemini-1.5-flash-latest",  # alias estable
     google_api_key=api_key,
-    temperature=0.1
+    temperature=0.1,
+    convert_system_message_to_human=True  # necesario para Gemini con historial
 )
 
 tools = [comprobar_disponibilidad]
