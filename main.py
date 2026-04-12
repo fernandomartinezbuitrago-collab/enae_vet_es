@@ -50,12 +50,11 @@ def comprobar_disponibilidad(fecha: str) -> str:
         return f"Error técnico: {str(e)}"
 
 # --- CONFIGURACIÓN "ANTI-404" ---
-# Forzamos Gemini 1.5 Flash en la versión estable v1
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
+    model="gemini-pro",
     google_api_key=api_key,
-    version="v1", # Este es el comando que debería matar el error v1beta
-    temperature=0.1
+    temperature=0.1,
+    convert_system_message_to_human=True
 )
 
 tools = [comprobar_disponibilidad]
