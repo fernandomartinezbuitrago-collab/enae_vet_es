@@ -21,70 +21,69 @@ load_dotenv()
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-# Configuración de Identificadores (VET-1)
+# Configuración (VET-1)
 api_key = os.getenv("GOOGLE_API_KEY")
 calendar_api_key = os.getenv("CALENDAR_API_KEY")
 calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com"
 
-# --- VET-13: Herramienta de Calendario Real (Reglas Sesión 1) ---
+# --- VET-13: Herramienta de Calendario (Lógica del Tetris) ---
 @tool
 def comprobar_disponibilidad(fecha: str) -> str:
-    """Consulta la agenda de la clínica. Formato: YYYY-MM-DD.
-    Límite: Máximo 2 cirugías por día (Regla del Tetris)."""
-    if not calendar_api_key: return "Error: API Key de calendario no configurada."
+    """Consulta la disponibilidad real. Formato: YYYY-MM-DD. 
+    Regla: Máximo 2 cirugías por día."""
+    if not calendar_api_key: return "Error de configuración."
     try:
         cal_encoded = urllib.parse.quote(calendar_id)
-        # Ventana quirúrgica: 09:00 a 13:00 [cite: 82]
         t_min, t_max = f"{fecha}T08:00:00Z", f"{fecha}T14:00:00Z"
         url = f"https://www.googleapis.com/calendar/v3/calendars/{cal_encoded}/events?key={calendar_api_key}&timeMin={t_min}&timeMax={t_max}&singleEvents=true"
         
         res = requests.get(url)
-        if res.status_code != 200: return "No se puede acceder a la agenda ahora mismo."
+        if res.status_code != 200: return "No hay conexión con la agenda."
         
         items = res.json().get("items", [])
-        # Regla: Máximo 2 perros/citas por día [cite: 105]
+        # Regla del Tetris: Máximo 2 perros [cite: 102, 105]
         if len(items) >= 2:
-            return f"El día {fecha} está COMPLETO (cupo de 2 mascotas alcanzado)."
+            return f"El día {fecha} está COMPLETO. Por favor, elige otro día de Lunes a Jueves."
         
-        return f"El día {fecha} está DISPONIBLE. Tenemos {2 - len(items)} hueco(s) libre(s)."
+        return f"El día {fecha} tiene disponibilidad para tu mascota."
     except Exception as e:
-        return f"Error técnico en Calendar: {str(e)}"
+        return f"Error técnico: {str(e)}"
 
-# --- SOLUCIÓN AL 404: Configuración Robusta ---
+# --- CONFIGURACIÓN "ANTI-404" ---
+# Forzamos Gemini 1.5 Flash en la versión estable v1
 llm = ChatGoogleGenerativeAI(
-    model="gemini-pro",
+    model="gemini-1.5-flash",
     google_api_key=api_key,
-    temperature=0.1,
-    convert_system_message_to_human=True
+    version="v1", # Este es el comando que debería matar el error v1beta
+    temperature=0.1
 )
 
 tools = [comprobar_disponibilidad]
 
-# --- VET-11: RAG (Instrucciones Preoperatorias) ---
+# --- VET-11: RAG Obligatorio ---
 try:
     contexto_rag = WebBaseLoader("https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation").load()[0].page_content[:4000]
 except:
-    contexto_rag = "Ayuno sólido: 8-12h[cite: 34]. Agua: hasta 2h antes[cite: 35]."
+    contexto_rag = "Ayuno sólido: 8-12h. Agua: hasta 2h antes."
 
-# --- SDD: Prompt con Reglas de Negocio Reales ---
+# --- SDD: Prompt con Reglas de Negocio ---
 prompt = ChatPromptTemplate.from_messages([
-    ("system", f"""Eres el asistente experto de la Clínica Veterinaria. Hoy es {datetime.date.today()}.
+    ("system", f"""Eres el asistente de la Clínica Veterinaria. Hoy es {datetime.date.today()}.
     
-    INSTRUCCIONES PREOPERATORIAS (RAG):
-    {contexto_rag}
+    REGLAS DE NEGOCIO (SDD):
+    1. AYUNO: Sólidos 8-12h antes. Agua hasta 2h antes[cite: 34, 35].
+    2. EDAD: Si es >6 años, analítica OBLIGATORIA[cite: 30].
+    3. CELO: Perras no pueden operarse en celo (esperar 2 meses)[cite: 19].
+    4. ENTREGAS: Gatos (08:00-09:00), Perros (09:00-10:30)[cite: 111].
+    5. AGENDA: Usa 'comprobar_disponibilidad' antes de confirmar citas. Solo operamos Lunes a Jueves[cite: 82].
     
-    REGLAS OBLIGATORIAS (SDD):
-    1. AYUNO: Sólidos 8-12h antes[cite: 34]. Agua hasta 1-2h antes[cite: 35].
-    2. EDAD: Si el animal tiene >6 años, analítica preoperatoria OBLIGATORIA[cite: 30].
-    3. CELO: Gatas OK[cite: 18]. Perras NO; esperar 2 meses tras el fin del celo[cite: 19].
-    4. ENTREGAS: Gatos (08:00-09:00) [cite: 111, 113], Perros (09:00-10:30)[cite: 111, 117].
-    5. AGENDA: Usa 'comprobar_disponibilidad' para confirmar fechas. Solo operamos Lunes a Jueves[cite: 82].
-    """),
+    Contexto RAG: {contexto_rag}"""),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
 ])
 
+# Ejecutor
 agent = create_tool_calling_agent(llm, tools, prompt)
 executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
