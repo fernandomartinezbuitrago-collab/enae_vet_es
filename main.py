@@ -25,52 +25,60 @@ api_key = os.getenv("GOOGLE_API_KEY")
 calendar_api_key = os.getenv("CALENDAR_API_KEY")
 calendar_id = "c1a485b2e53f83061613ed9bcf992486abe82de9d4d0df653e0e50a5c0d61d8f@group.calendar.google.com"
 
-# --- VET-13: Herramienta de Calendario Real ---
+# --- VET-13: Herramienta de Calendario Real (Reglas de la Sesión 1) ---
 @tool
 def comprobar_disponibilidad(fecha: str) -> str:
     """Consulta la agenda real de la clínica. Formato: YYYY-MM-DD."""
-    if not calendar_api_key: return "Error de configuración de la agenda."
+    if not calendar_api_key: return "Error: CALENDAR_API_KEY ausente en el servidor."
     try:
         cal_encoded = urllib.parse.quote(calendar_id)
+        # La clínica opera de 09:00 a 13:00 [cite: 82]
         t_min, t_max = f"{fecha}T08:00:00Z", f"{fecha}T14:00:00Z"
         url = f"https://www.googleapis.com/calendar/v3/calendars/{cal_encoded}/events?key={calendar_api_key}&timeMin={t_min}&timeMax={t_max}&singleEvents=true"
+        
         res = requests.get(url)
-        if res.status_code != 200: return "No hay conexión con el calendario."
+        if res.status_code != 200: return f"Error de conexión con Google (Status {res.status_code})."
+        
         items = res.json().get("items", [])
-        if len(items) >= 2: # Regla del Tetris [cite: 102, 105]
-            return f"El día {fecha} está completo (máximo 2 citas)."
-        return f"El día {fecha} tiene {2 - len(items)} hueco(s) libre(s)."
+        # Regla del Tetris: Máximo 2 perros por día [cite: 102, 105, 586]
+        # Capacidad diaria: 240 minutos [cite: 82, 85]
+        if len(items) >= 2:
+            return f"El día {fecha} está COMPLETO. Por favor, elige otro día de Lunes a Jueves."
+        
+        return f"¡Buenas noticias! El {fecha} tiene disponibilidad. Quedan {2 - len(items)} huecos."
     except Exception as e:
-        return f"Error técnico: {str(e)}"
+        return f"Error en la tool: {str(e)}"
 
-# --- CONFIGURACIÓN ESTABLE (GEMINI PRO) ---
+# --- CONFIGURACIÓN ESTABLE ---
 llm = ChatGoogleGenerativeAI(
     model="gemini-pro", 
     google_api_key=api_key,
     temperature=0.1,
-    convert_system_message_to_human=True # Vital para modelos antiguos
+    convert_system_message_to_human=True # Necesario para evitar errores de protocolo
 )
 
 tools = [comprobar_disponibilidad]
 
-# --- VET-11: RAG (URL Oficial) ---
+# --- VET-11: RAG (URL Oficial del Caso) ---
 try:
     contexto_rag = WebBaseLoader("https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation").load()[0].page_content[:4000]
 except:
-    contexto_rag = "Ayuno sólido: 8-12h. Agua: hasta 2h antes. [cite: 34, 35]"
+    contexto_rag = "Ayuno sólido: 8-12h. Agua: hasta 1-2h antes[cite: 34, 35]."
 
-# --- SDD: Prompt con Reglas de Negocio ---
+# --- SDD: Prompt con Reglas de Negocio Estrictas ---
 prompt = ChatPromptTemplate.from_messages([
-    ("system", f"""Eres el asistente de la Clínica Veterinaria. Hoy es {datetime.date.today()}.
+    ("system", f"""Eres el asistente experto de la Clínica Veterinaria. Hoy es {datetime.date.today()}.
     
-    REGLAS DE NEGOCIO:
-    1. AYUNO: 8-12h sólidos, agua hasta 2h antes[cite: 34, 35].
-    2. EDAD: >6 años analítica OBLIGATORIA[cite: 30].
-    3. CELO: Perras no; esperar 2 meses[cite: 19].
-    4. ENTREGAS: Gatos (08:00-09:00), Perros (09:00-10:30)[cite: 111].
-    5. AGENDA: Solo operamos de Lunes a Jueves[cite: 82]. Usa 'comprobar_disponibilidad'.
+    INSTRUCCIONES PREOPERATORIAS (RAG):
+    {contexto_rag}
     
-    Contexto RAG: {contexto_rag}"""),
+    REGLAS DE NEGOCIO (SDD):
+    1. AYUNO: Sólidos 8-12h antes. Agua permitida hasta 1-2h antes[cite: 34, 35].
+    2. EDAD: Si el animal tiene >6 años, la analítica es OBLIGATORIA[cite: 30, 422].
+    3. CELO: Gatas se pueden operar. Perras NO; esperar 2 meses tras el celo[cite: 18, 19, 420].
+    4. ENTREGAS: Gatos (08:00-09:00, Lun-Vie). Perros (09:00-10:30, Lun-Jue)[cite: 111, 120, 121].
+    5. AGENDA: Usa 'comprobar_disponibilidad' para confirmar fechas quirúrgicas.
+    """),
     MessagesPlaceholder(variable_name="history"),
     ("human", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -99,5 +107,6 @@ async def chat(msg: ChatMessage):
     try:
         res = chain.invoke({"input": msg.message}, config={"configurable": {"session_id": msg.session_id}})
         return {"response": res["output"]}
-    except Exception:
-        return {"response": "Lo siento, el sistema está saturado. Reintenta en unos segundos."}
+    except Exception as e:
+        # Mostramos el error real para diagnosticar
+        return {"response": f"Error de diagnóstico: {str(e)}"}
