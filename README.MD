@@ -61,14 +61,15 @@ Para replicar este proyecto, es necesario configurar las siguientes variables de
 ```env
 GOOGLE_API_KEY=tu_clave_de_google_ai_studio
 CALENDAR_API_KEY=tu_clave_de_google_cloud_console
+
 # El ID del calendario se gestiona internamente o vía variable
 Intent,Descripción,Ejemplo de Interacción
-SALUDO,Inicio de la conversación y presentación del rol.,"""¡Hola! Soy el asistente de la clínica. ¿En qué puedo ayudarte?"" "
-CONSULTAR_SERVICIOS,Información sobre la cartera de servicios de la clínica.,"Ofrece cirugía, medicina general, vacunación, peluquería, etc. "
-PREPARACION_CIRUGIA,Recuperación de información (RAG) sobre ayuno y protocolos.,Ayuno de sólidos (8-12h) y agua (hasta 1-2h antes). 
-REGLA_EDAD,Validación de analítica obligatoria por edad.,"""Al tener tu perro 8 años, es obligatoria una analítica preoperatoria."" "
-REGLA_CELO,Gestión de restricciones médicas por celo en perras y gatas.,Diferenciación entre perras (espera de 2 meses) y gatas (sí pueden operarse). +1
-CONSULTAR_CITA,Uso de la Tool de disponibilidad conectada a Google Calendar.,Consulta de huecos disponibles para fechas específicas. 
-RESERVA_CAPACIDAD,"Control de límites de la agenda (""El Tetris"").",Gestión de rechazo ante solicitudes que exceden el cupo diario de perros. 
-LOGISTICA_ENTREGA,Gestión de horarios específicos por especie (Memoria).,Horarios de entrega de gatos (08:00-09:00) y confirmación de especie. +1
-EMERGENCIA_DERIVACION,Manejo de casos fuera del alcance del MVP.,Gestión de emergencias médicas y derivación a contacto telefónico. +1
+SALUDO,Inicio de la conversación y presentación del rol., ¡Hola! Soy el asistente de la clínica. ¿En qué puedo ayudarte?
+CONSULTAR_SERVICIOS,Información sobre la cartera de servicios de la clínica.,Ofrece cirugía, medicina general, vacunación, peluquería, etc.
+PREPARACION_CIRUGIA, Recuperación de información (RAG) sobre ayuno y protocolos.,Ayuno de sólidos (8-12h) y agua (hasta 1-2h antes). 
+REGLA_EDAD,Validación de analítica obligatoria por edad., Al tener tu perro 8 años, es obligatoria una analítica preoperatoria.
+REGLA_CELO,Gestión de restricciones médicas por celo en perras y gatas.,Diferenciación entre perras (espera de 2 meses) y gatas (sí pueden operarse).
+CONSULTAR_CITA, Uso de la Tool de disponibilidad conectada a Google Calendar.,Consulta de huecos disponibles para fechas específicas. 
+RESERVA_CAPACIDAD, Control de límites de la agenda (""El Tetris""). Gestión de rechazo ante solicitudes que exceden el cupo diario de perros. 
+LOGISTICA_ENTREGA,Gestión de horarios específicos por especie (Memoria).,Horarios de entrega de gatos (08:00-09:00) y confirmación de especie.
+EMERGENCIA_DERIVACION,Manejo de casos fuera del alcance del MVP.,Gestión de emergencias médicas y derivación a contacto telefónico.
