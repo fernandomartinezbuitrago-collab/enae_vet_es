@@ -1,4 +1,4 @@
-# 🐾 Asistente Inteligente - Clínica Veterinaria (MVP)
+# 🐾 Asistente Inteligente - Clínica Veterinaria
 
 Este proyecto consiste en el desarrollo de un chatbot inteligente para la gestión de una clínica veterinaria, realizado como proyecto final para el programa de IA Generativa de **ENAE Business School**. El sistema automatiza la atención al cliente, la consulta de instrucciones preoperatorias y la gestión de agenda quirúrgica real.
 
@@ -10,7 +10,8 @@ Este proyecto consiste en el desarrollo de un chatbot inteligente para la gesti�
 
 * **Backend:** Python 3.12 con FastAPI.
 * **Orquestador de IA:** LangChain v0.3.
-* **Modelo de Lenguaje:** Google Gemini 1.5 Flash.
+* **Modelo de Lenguaje:** Google Gemini 2.5 Flash.
+* **Librería de Integración:** `langchain-google-genai` v2.0.1 (Conexión estable vía API v1).
 * **Infraestructura:** Vercel (Serverless Functions).
 * **Integraciones:** Google Calendar API (v3).
 * **Frontend:** HTML5, CSS3 (Tailwind CSS) y JavaScript.
@@ -20,7 +21,7 @@ Este proyecto consiste en el desarrollo de un chatbot inteligente para la gesti�
 ## 🧠 Características Principales
 
 ### 1. Implementación RAG (Retrieval-Augmented Generation)
-El bot utiliza una técnica de RAG dinámico para ofrecer información oficial y actualizada. Mediante `WebBaseLoader`, el asistente extrae las instrucciones preoperatorias directamente de la fuente de verdad de la clínica:
+El bot utiliza una técnica de RAG dinámico para ofrecer información oficial y actualizada. Mediante `WebBaseLoader`, el asistente extrae las instrucciones preoperatorias directamente de la "fuente de verdad" de la clínica:
 * **URL de conocimiento:** [Instrucciones Preoperatorias](https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation)
 
 ### 2. Tool de Disponibilidad Quirúrgica ("El Tetris")
@@ -41,25 +42,41 @@ El asistente ha sido programado para cumplir estrictamente con los criterios de 
 * **Protocolo de Ayuno:** 8-12 horas para sólidos; agua permitida hasta 2 horas antes.
 * **Gestión de Celo:** Bloqueo de cirugías para perras en celo (requiere espera de 2 meses).
 * **Horarios de Logística:**
-    * Gatos: Entrada (08:00-09:00) / Recogida (~15:00).
-    * Perros: Entrada (09:00-10:30) / Recogida (~12:00).
+  * **Gatos:** Entrada (08:00-09:00) / Recogida (~15:00).
+  * **Perros:** Entrada (09:00-10:30) / Recogida (~12:00).
+
+---
+
+## 📂 Catálogo de Intents y Casos de Uso
+
+A continuación se detallan las principales intenciones que el sistema es capaz de procesar:
+
+| Intent | Descripción | Ejemplo de Interacción |
+| :--- | :--- | :--- |
+| **SALUDO** | Inicio de la conversación y presentación del rol. | "¡Hola! Soy el asistente de la clínica. ¿En qué puedo ayudarte?" |
+| **CONSULTAR_SERVICIOS** | Información sobre la cartera de servicios de la clínica. | "Ofrecemos servicios de cirugía, medicina general, vacunación..." |
+| **PREPARACION_CIRUGIA** | Recuperación de información (RAG) sobre protocolos de ayuno. | "Tu animal debe ayunar de sólidos entre 8 y 12 horas antes." |
+| **REGLA_EDAD** | Validación de analítica obligatoria por edad. | "Al tener tu perro 8 años, es obligatoria una analítica preoperatoria." |
+| **REGLA_CELO** | Gestión de restricciones médicas por celo según especie. | "Las perras no se pueden operar en celo; esperar 2 meses." |
+| **CONSULTAR_CITA** | Uso de la Tool de disponibilidad (Google Calendar). | "Sí, tenemos 2 huecos disponibles para mañana." |
+| **RESERVA_CAPACIDAD** | Control de límites de la agenda ("El Tetris"). | "Lo siento, solo tenemos 2 huecos disponibles para mañana." |
+| **LOGISTICA_ENTREGA** | Gestión de horarios específicos por especie. | "Los gatos deben entregarse entre las 08:00 y las 09:00." |
+| **EMERGENCIA_DERIVACION** | Manejo de casos críticos y derivación a contacto humano. | "Puedes llamar a la clínica al 555-123-4567." |
 
 ---
 
 ## 📈 Metodología y Trazabilidad
 
 El desarrollo se ha gestionado siguiendo metodologías ágiles y control de versiones:
-* **Backlog en Jira:** Seguimiento desde el ticket **VET-1** hasta el **VET-14**.
-* **Control de Versiones:** Uso de GitFlow con Pull Requests vinculados a cada tarea de Jira para asegurar la trazabilidad del código.
+* **Backlog en Jira:** Seguimiento exhaustivo desde el ticket **VET-1** hasta el **VET-14**.
+* **Control de Versiones:** Uso de Pull Requests (PR) vinculados a cada tarea para asegurar la trazabilidad.
 
 ---
 
 ## ⚙️ Configuración del Entorno
 
-Para replicar este proyecto, es necesario configurar las siguientes variables de entorno en Vercel:
+Para replicar este proyecto, configura las siguientes variables en Vercel:
 
 ```env
 GOOGLE_API_KEY=tu_clave_de_google_ai_studio
 CALENDAR_API_KEY=tu_clave_de_google_cloud_console
-
-IntentDescripciónEjemplo de InteracciónSALUDOInicio de la conversación y presentación del rol. "¡Hola! Soy el asistente de la clínica. ¿En qué puedo ayudarte?" CONSULTAR_SERVICIOSInformación sobre la cartera de servicios de la clínica. "Ofrecemos servicios de cirugía, medicina general, vacunación, peluquería..." PREPARACION_CIRUGIARecuperación de información (RAG) sobre protocolos de ayuno. Ayuno de sólidos (8-12h) y agua (hasta 1-2h antes). REGLA_EDADValidación de analítica obligatoria para animales de más de 6 años. "Al tener tu perro 8 años, es obligatoria una analítica preoperatoria". REGLA_CELOGestión de restricciones médicas por celo según la especie. Bloqueo para perras (espera de 2 meses) y permiso para gatas. CONSULTAR_CITAUso de la Tool de disponibilidad conectada a Google Calendar. "Sí, tenemos 2 huecos disponibles para mañana, 14 de abril". RESERVA_CAPACIDADControl de límites de la agenda ("El Tetris") para perros. Rechazo de agendado de 3 perros cuando solo hay 2 huecos. LOGISTICA_ENTREGAGestión de horarios por especie y memoria de sesión. Confirmación de horario para gatos (08:00-09:00) tras identificar especie. EMERGENCIA_DERIVACIONManejo de casos críticos y derivación a contacto humano. Petición de detalles sobre ingesta tóxica y facilitación de teléfono. 
