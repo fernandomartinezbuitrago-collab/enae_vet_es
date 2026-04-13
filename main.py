@@ -105,3 +105,19 @@ async def chat(msg: ChatMessage):
         return {"response": res["output"]}
     except Exception as e:
         return {"response": f"Error de diagnóstico: {str(e)}"}
+        # ... todo el código anterior ...
+
+@app.get("/modelos")
+async def listar_modelos():
+    import google.generativeai as genai
+    genai.configure(api_key=api_key)
+    modelos = [m.name for m in genai.list_models()]
+    return {"modelos": modelos}
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(name="index.html", context={"request": request})
+
+@app.post("/chat/test")
+async def chat(msg: ChatMessage):
+    ...
