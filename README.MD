@@ -62,14 +62,4 @@ Para replicar este proyecto, es necesario configurar las siguientes variables de
 GOOGLE_API_KEY=tu_clave_de_google_ai_studio
 CALENDAR_API_KEY=tu_clave_de_google_cloud_console
 
-# El ID del calendario se gestiona internamente o vía variable
-Intent,Descripción,Ejemplo de Interacción
-SALUDO,Inicio de la conversación y presentación del rol., ¡Hola! Soy el asistente de la clínica. ¿En qué puedo ayudarte?
-CONSULTAR_SERVICIOS,Información sobre la cartera de servicios de la clínica.,Ofrece cirugía, medicina general, vacunación, peluquería, etc.
-PREPARACION_CIRUGIA, Recuperación de información (RAG) sobre ayuno y protocolos.,Ayuno de sólidos (8-12h) y agua (hasta 1-2h antes). 
-REGLA_EDAD,Validación de analítica obligatoria por edad., Al tener tu perro 8 años, es obligatoria una analítica preoperatoria.
-REGLA_CELO,Gestión de restricciones médicas por celo en perras y gatas.,Diferenciación entre perras (espera de 2 meses) y gatas (sí pueden operarse).
-CONSULTAR_CITA, Uso de la Tool de disponibilidad conectada a Google Calendar.,Consulta de huecos disponibles para fechas específicas. 
-RESERVA_CAPACIDAD, Control de límites de la agenda (""El Tetris""). Gestión de rechazo ante solicitudes que exceden el cupo diario de perros. 
-LOGISTICA_ENTREGA,Gestión de horarios específicos por especie (Memoria).,Horarios de entrega de gatos (08:00-09:00) y confirmación de especie.
-EMERGENCIA_DERIVACION,Manejo de casos fuera del alcance del MVP.,Gestión de emergencias médicas y derivación a contacto telefónico.
+IntentDescripciónEjemplo de InteracciónSALUDOInicio de la conversación y presentación del rol. "¡Hola! Soy el asistente de la clínica. ¿En qué puedo ayudarte?" CONSULTAR_SERVICIOSInformación sobre la cartera de servicios de la clínica. "Ofrecemos servicios de cirugía, medicina general, vacunación, peluquería..." PREPARACION_CIRUGIARecuperación de información (RAG) sobre protocolos de ayuno. Ayuno de sólidos (8-12h) y agua (hasta 1-2h antes). REGLA_EDADValidación de analítica obligatoria para animales de más de 6 años. "Al tener tu perro 8 años, es obligatoria una analítica preoperatoria". REGLA_CELOGestión de restricciones médicas por celo según la especie. Bloqueo para perras (espera de 2 meses) y permiso para gatas. CONSULTAR_CITAUso de la Tool de disponibilidad conectada a Google Calendar. "Sí, tenemos 2 huecos disponibles para mañana, 14 de abril". RESERVA_CAPACIDADControl de límites de la agenda ("El Tetris") para perros. Rechazo de agendado de 3 perros cuando solo hay 2 huecos. LOGISTICA_ENTREGAGestión de horarios por especie y memoria de sesión. Confirmación de horario para gatos (08:00-09:00) tras identificar especie. EMERGENCIA_DERIVACIONManejo de casos críticos y derivación a contacto humano. Petición de detalles sobre ingesta tóxica y facilitación de teléfono. 
