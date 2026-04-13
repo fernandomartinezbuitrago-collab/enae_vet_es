@@ -1,110 +1,74 @@
-# 🐾 Chatbot Clinica Veterinaria - Documento Maestro (Fuente de la Verdad)
+# 🐾 Asistente Inteligente - Clínica Veterinaria (MVP)
 
-Este `README.MD` es la referencia principal del proyecto para alcance funcional, reglas de negocio, stack tecnico, flujo operativo y estado del backlog.
+Este proyecto consiste en el desarrollo de un chatbot inteligente para la gestión de una clínica veterinaria, realizado como proyecto final para el programa de IA Generativa de **ENAE Business School**. El sistema automatiza la atención al cliente, la consulta de instrucciones preoperatorias y la gestión de agenda quirúrgica real.
 
-## 🎯 Vision del Proyecto (MVP Esterilizaciones)
+🚀 **Despliegue público:** [https://enae-vet-es.vercel.app/](https://enae-vet-es.vercel.app/)
 
-El proyecto implementa un chatbot para una clinica veterinaria enfocada en medicina preventiva, especialmente esterilizaciones caninas y felinas.  
-El MVP prioriza tres objetivos:
+---
 
-- Guiar al cliente con informacion preoperatoria clara y segura.
-- Reducir carga administrativa en la reserva y confirmacion de citas.
-- Validar disponibilidad segun reglas estrictas de agenda ("El Tetris") antes de confirmar.
+## 🛠️ Stack Tecnológico
 
-Alcance del MVP:
+* **Backend:** Python 3.12 con FastAPI.
+* **Orquestador de IA:** LangChain v0.3.
+* **Modelo de Lenguaje:** Google Gemini 1.5 Flash.
+* **Infraestructura:** Vercel (Serverless Functions).
+* **Integraciones:** Google Calendar API (v3).
+* **Frontend:** HTML5, CSS3 (Tailwind CSS) y JavaScript.
 
-- Reservas de esterilizacion (perros y gatos).
-- Validacion automatica de cupos por minutos y limite de perros por dia.
-- Mensajeria de confirmacion con ventana de entrega y protocolo de ayuno.
+---
 
-## 📚 Documentacion de Dominio
+## 🧠 Características Principales
 
-Fuente funcional y de negocio del proyecto:
+### 1. Implementación RAG (Retrieval-Augmented Generation)
+El bot utiliza una técnica de RAG dinámico para ofrecer información oficial y actualizada. Mediante `WebBaseLoader`, el asistente extrae las instrucciones preoperatorias directamente de la fuente de verdad de la clínica:
+* **URL de conocimiento:** [Instrucciones Preoperatorias](https://veterinary-clinic-teal.vercel.app/en/docs/instructions-before-operation)
 
-- [`docs/SDD_PROJECT_RULES.md`](docs/SDD_PROJECT_RULES.md): reglas SDD, trazabilidad Jira/GitHub y convenciones de ramas (VET-4).
-- `[docs/preparatorio.md](docs/preparatorio.md)`: contexto clinico, protocolo pre y post operatorio, requisitos para una esterilizacion segura.
-- `[docs/reglas_negocio.md](docs/reglas_negocio.md)`: reglas formales de agenda, tabla maestra de tiempos y restricciones del algoritmo.
-- `[docs/event_storming.md](docs/event_storming.md)`: diagrama del flujo end-to-end (comandos, eventos, politicas y validaciones).
+### 2. Tool de Disponibilidad Quirúrgica ("El Tetris")
+Se ha desarrollado una herramienta personalizada (`tool`) que conecta con **Google Calendar** para gestionar la capacidad del quirófano en tiempo real siguiendo las reglas del SDD:
+* **Capacidad Temporal:** Máximo 240 minutos de cirugía al día.
+* **Restricción por Especie:** Límite estricto de **2 perros** por día.
+* **Días Operativos:** Gestión exclusiva de citas de Lunes a Jueves.
 
-## 🧠 Reglas de Negocio (El Tetris)
+### 3. Memoria de Sesión
+El chatbot implementa `InMemoryChatMessageHistory` gestionado por un `session_id`, lo que permite mantener el contexto de la mascota (nombre, especie, edad) durante toda la conversación.
 
-Resumen ejecutivo basado en `docs/reglas_negocio.md`:
+---
 
-- **Capacidad diaria maxima:** `240 minutos` por dia quirurgico.
-- **Dias operativos para cirugia:** lunes a jueves.
-- **Limite de perros:** maximo `2 perros` por dia (aunque sobren minutos).
-- **Gatos:** sin limite de cantidad; se limita solo por minutos disponibles.
+## 📋 Reglas de Negocio Implementadas (SDD)
 
-### Tiempos de cirugia (coste en minutos)
+El asistente ha sido programado para cumplir estrictamente con los criterios de la Sesión 6:
+* **Analítica Preoperatoria:** Obligatoria para cualquier mascota mayor de 6 años.
+* **Protocolo de Ayuno:** 8-12 horas para sólidos; agua permitida hasta 2 horas antes.
+* **Gestión de Celo:** Bloqueo de cirugías para perras en celo (requiere espera de 2 meses).
+* **Horarios de Logística:**
+    * Gatos: Entrada (08:00-09:00) / Recogida (~15:00).
+    * Perros: Entrada (09:00-10:30) / Recogida (~12:00).
 
-- **Gato macho:** 12 min
-- **Gata hembra:** 15 min
-- **Perro macho (cualquier peso):** 30 min
-- **Perra 0-10 kg:** 45 min
-- **Perra 10-20 kg:** 50 min
-- **Perra 20-30 kg:** 60 min
-- **Perra 30-40 kg:** 60 min
-- **Perra >40 kg:** 70 min
+---
 
-### Reglas de bloqueo
+## 📈 Metodología y Trazabilidad
 
-Una fecha solo es valida si se cumplen ambas condiciones:
+El desarrollo se ha gestionado siguiendo metodologías ágiles y control de versiones:
+* **Backlog en Jira:** Seguimiento desde el ticket **VET-1** hasta el **VET-14**.
+* **Control de Versiones:** Uso de GitFlow con Pull Requests vinculados a cada tarea de Jira para asegurar la trazabilidad del código.
 
-1. `(minutos_ocupados + minutos_nueva_cita) <= 240`
-2. Si la especie es perro: `(perros_del_dia + 1) <= 2`
+---
 
-Si falla cualquiera de las dos, la fecha se marca como **No disponible**.
+## ⚙️ Configuración del Entorno
 
-## 🛠️ Stack Tecnico
+Para replicar este proyecto, es necesario configurar las siguientes variables de entorno en Vercel:
 
-- **Backend API:** FastAPI
-- **Orquestacion IA:** LangChain
-- **Modelo LLM:** OpenAI
-- **Despliegue:** Vercel ([https://enae-vet-es.vercel.app](https://enae-vet-es.vercel.app))
-
-## ⚙️ Comandos Operativos (.cursor/commands)
-
-### `/enrich`
-
-Comando para enriquecer tickets Jira existentes (especialmente para PM):
-
-- Completa descripcion con arquitectura, tecnologias, flujo, glosario de docs, out of scope y CAC.
-- Mejora claridad y trazabilidad antes de implementar.
-
-Referencia: `.cursor/commands/enrich.md`
-
-### `/implement-ticket`
-
-Comando para ejecutar tickets de punta a punta:
-
-- Lee ticket y CAC.
-- Implementa cambios en codigo/documentacion.
-- Ejecuta validaciones.
-- Prepara rama/PR y acompana el flujo de estados Jira.
-
-Referencia: `.cursor/commands/implement-ticket.md`
-
-## 📊 Estado del Backlog (VET)
-
-
-| Ticket         | Descripcion                          | Estado      |
-| -------------- | ------------------------------------ | ----------- |
-| VET-1          | Repo base y accesos                  | Hecho ✅     |
-| VET-2          | README Maestro                       | Hecho ✅     |
-| VET-14         | Documentacion de dominio             | Hecho ✅     |
-| VET-4          | Reglas SDD (Repo + Jira)             | Hecho ✅     |
-| VET-3          | Configuracion y despliegue en Vercel | Pendiente ⏳ |
-| VET-7 a VET-13 | Implementacion del chatbot           | Pendiente ⏳ |
-
-
-Backlog detallado: `.cursor/docs/Tickets.md`
-
-## 🔗 Enlaces de Proyecto
-
-- Jira (proyecto): [FERNANDO - Enae-vet-es](https://fernandomartinezbuitrago.atlassian.net/jira/software/projects/FERNANDO/summary)
-- Ticket VET-2 equivalente en Jira: [FERNANDO-14](https://fernandomartinezbuitrago.atlassian.net/browse/FERNANDO-14)
-- Ticket VET-3 equivalente en Jira: [FERNANDO-15](https://fernandomartinezbuitrago.atlassian.net/browse/FERNANDO-15)
-
-## ✅ Criterio de Mantenimiento del README
-
-Cada cambio funcional relevante debe reflejarse aqui para mantener este documento como **fuente de la verdad** del proyecto.
+```env
+GOOGLE_API_KEY=tu_clave_de_google_ai_studio
+CALENDAR_API_KEY=tu_clave_de_google_cloud_console
+# El ID del calendario se gestiona internamente o vía variable
+Intent,Descripción,Ejemplo de Interacción
+SALUDO,Inicio de la conversación y presentación del rol.,"""¡Hola! Soy el asistente de la clínica. ¿En qué puedo ayudarte?"" "
+CONSULTAR_SERVICIOS,Información sobre la cartera de servicios de la clínica.,"Ofrece cirugía, medicina general, vacunación, peluquería, etc. "
+PREPARACION_CIRUGIA,Recuperación de información (RAG) sobre ayuno y protocolos.,Ayuno de sólidos (8-12h) y agua (hasta 1-2h antes). 
+REGLA_EDAD,Validación de analítica obligatoria por edad.,"""Al tener tu perro 8 años, es obligatoria una analítica preoperatoria."" "
+REGLA_CELO,Gestión de restricciones médicas por celo en perras y gatas.,Diferenciación entre perras (espera de 2 meses) y gatas (sí pueden operarse). +1
+CONSULTAR_CITA,Uso de la Tool de disponibilidad conectada a Google Calendar.,Consulta de huecos disponibles para fechas específicas. 
+RESERVA_CAPACIDAD,"Control de límites de la agenda (""El Tetris"").",Gestión de rechazo ante solicitudes que exceden el cupo diario de perros. 
+LOGISTICA_ENTREGA,Gestión de horarios específicos por especie (Memoria).,Horarios de entrega de gatos (08:00-09:00) y confirmación de especie. +1
+EMERGENCIA_DERIVACION,Manejo de casos fuera del alcance del MVP.,Gestión de emergencias médicas y derivación a contacto telefónico. +1
