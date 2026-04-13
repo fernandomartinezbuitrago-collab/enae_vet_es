@@ -47,7 +47,7 @@ def comprobar_disponibilidad(fecha: str) -> str:
 
 # --- CONFIGURACIÓN LLM ---
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash-lite",
+    model="gemini-2.5-flash",
     google_api_key=api_key,
     temperature=0.1
 )
